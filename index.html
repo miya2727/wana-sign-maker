@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>わな標識メーカー</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:#eef1f5;color:#222}
+header{background:#183b2b;color:white;padding:18px}
+header h1{margin:0;font-size:23px}
+header p{margin:6px 0 0;font-size:13px}
+main{max-width:1100px;margin:auto;padding:16px}
+.panel{background:white;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px #0001}
+h2{font-size:18px;margin-top:0}
+label{display:block;font-weight:bold;font-size:14px;margin:12px 0 5px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #bbb;border-radius:8px;font-size:16px;background:white}
+textarea{min-height:75px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{padding:12px;border:0;border-radius:8px;font-size:15px;font-weight:bold;background:#245b3e;color:white;margin:5px 3px 5px 0}
+button.secondary{background:#586574}
+button.danger{background:#9a3939}
+.preview{background:white;padding:12px;overflow:auto}
+.sign{border:7px solid #222;padding:20px;text-align:center;min-height:360px;color:#111}
+.sign h3{font-size:25px;margin:5px 0}
+.sign h1{font-size:42px;margin:10px 0;line-height:1.3}
+.sign .alert{font-size:35px;font-weight:900;margin:10px 0}
+.sign .detail{font-size:22px;font-weight:bold;white-space:pre-wrap;overflow-wrap:anywhere}
+.sign .small{font-size:17px;white-space:pre-wrap;overflow-wrap:anywhere}
+.sign hr{border:0;border-top:3px solid #222;margin:12px 0}
+.muted{font-size:12px;color:#666}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.sign{min-height:300px;padding:12px}.sign h1{font-size:30px}.sign .alert{font-size:28px}.sign .detail{font-size:18px}}
+@page{size:A4 landscape;margin:10mm}
+@media print{
+body{background:white}
+header,.formPanel,.actions,.muted,.panelTitle{display:none!important}
+main{padding:0;margin:0;max-width:none}
+.panel{padding:0;margin:0;box-shadow:none}
+.preview{padding:0}
+.sign{width:100%;min-height:180mm;border:6px solid #111;padding:15mm 12mm}
+.sign h1{font-size:42pt}
+.sign .alert{font-size:32pt}
+.sign .detail{font-size:22pt}
+.sign .small{font-size:16pt}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>わな標識メーカー</h1>
+<p>全国向け汎用版・標識作成ツール</p>
+</header>
+
+<main>
+<div class="panel formPanel">
+<h2>標識内容の入力</h2>
+
+<label>標識の種類</label>
+<select id="type">
+<option>登録狩猟用</option>
+<option>有害鳥獣捕獲等用</option>
+<option>共用版</option>
+</select>
+
+<label>標識タイトル</label>
+<input id="title" value="わな設置のお知らせ">
+
+<label>表示メッセージ</label>
+<input id="message" value="わな設置中">
+
+<label>設置者・捕獲従事者名</label>
+<input id="name" placeholder="氏名">
+
+<label>住所</label>
+<input id="address" placeholder="住所">
+
+<label>電話番号</label>
+<input id="phone" placeholder="連絡先電話番号">
+
+<label>許可番号・登録番号等</label>
+<input id="permit" placeholder="番号を入力">
+
+<div class="grid">
+<div>
+<label>開始日</label>
+<input id="start" type="date">
+</div>
+<div>
+<label>終了日</label>
+<input id="end" type="date">
+</div>
+
+<label>捕獲対象鳥獣</label>
+<input id="animals" placeholder="対象鳥獣">
+
+<label>捕獲目的・区分</label>
+<input id="purpose" placeholder="目的など">
+
+<label>設置場所</label>
+<input id="place" placeholder="場所">
+
+<label>その他の表示事項</label>
+<textarea id="extra" placeholder="追加事項"></textarea>
+
+<div class="actions">
+<button onclick="saveData()">入力を保存</button>
+<button class="secondary" onclick="loadData()">保存内容を読み込む</button>
+<button class="secondary" onclick="window.print()">PDF保存・印刷</button>
+<button class="secondary" onclick="downloadCSV()">CSVテンプレート</button>
+<button class="secondary" onclick="document.getElementById('csvFile').click()">CSV読み込み</button>
+<input id="csvFile" type="file" accept=".csv,text/csv" hidden onchange="importCSV(event)">
+<button class="danger" onclick="clearForm()">入力をクリア</button>
+</div>
+<p class="muted">
+※このアプリは汎用作成用です。実際の設置前に、管轄自治体・許可条件・必要な標識事項をご確認ください。
+</p>
+</div>
+
+<div class="panel">
+<h2 class="panelTitle">標識プレビュー</h2>
+<div class="preview">
+<div class="sign">
+<h3 id="pType">登録狩猟用</h3>
+<h1 id="pTitle">わな設置のお知らせ</h1>
+<div class="alert" id="pMessage">わな設置中</div>
+<hr>
+<div class="detail" id="pAnimals"></div>
+<div class="detail" id="pPurpose"></div>
+<div class="detail" id="pPlace"></div>
+<div class="detail" id="pPeriod"></div>
+<hr>
+<div class="small" id="pName"></div>
+<div class="small" id="pAddress"></div>
+<div class="small" id="pPhone"></div>
+<div class="small" id="pPermit"></div>
+<div class="small" id="pExtra"></div>
+</div>
+</div>
+</main>
+
+<script>
+const ids=["type","title","message","name","address","phone","permit","start","end","animals","purpose","place","extra"];
+function val(id){return document.getElementById(id).value.trim()}
+function safeText(id,text){document.getElementById(id).textContent=text}
+function update(){
+safeText("pType",val("type"));
+safeText("pTitle",val("title"));
+safeText("pMessage",val("message"));
+safeText("pAnimals",val("animals")?"対象："+val("animals"):"");
+safeText("pPurpose",val("purpose")?"目的："+val("purpose"):"");
+safeText("pPlace",val("place")?"場所："+val("place"):"");
+safeText("pPeriod",(val("start")||val("end"))?"期間："+val("start")+" ～ "+val("end"):"");
+safeText("pName",val("name")?"設置者："+val("name"):"");
+safeText("pAddress",val("address")?"住所："+val("address"):"");
+safeText("pPhone",val("phone")?"連絡先："+val("phone"):"");
+safeText("pPermit",val("permit")?"番号："+val("permit"):"");
+safeText("pExtra",val("extra"));
+}
+ids.forEach(id=>document.getElementById(id).addEventListener("input",update));
+ids.forEach(id=>document.getElementById(id).addEventListener("change",update));
+
+function saveData(){
+const d={};
+ids.forEach(id=>d[id]=val(id));
+localStorage.setItem("wanaSignData",JSON.stringify(d));
+alert("このブラウザに保存しました");
+}
+function loadData(){
+const d=JSON.parse(localStorage.getItem("wanaSignData")||"null");
+if(!d){alert("保存データがありません");return}
+ids.forEach(id=>{if(d[id]!==undefined)document.getElementById(id).value=d[id]});
+update();
+alert("保存データを読み込みました");
+}
+function clearForm(){
+if(!confirm("入力内容をクリアしますか？"))return;
+ids.forEach(id=>document.getElementById(id).value="");
+update();
+}
+function downloadCSV(){
+const csv="種類,標識タイトル,表示メッセージ,氏名,住所,電話番号,許可番号,開始日,終了日,対象鳥獣,目的,場所,追加事項\n";
+const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="wana_sign_template.csv";
+a.click();
+URL.revokeObjectURL(a.href);
+}
+function importCSV(e){
+const file=e.target.files[0];
+if(!file)return;
+const reader=new FileReader();
+reader.onload=()=>{
+const lines=reader.result.replace(/^\uFEFF/,"").trim().split(/\r?\n/);
+if(lines.length<2){alert("CSVにデータ行がありません");return}
+const row=parseCSV(lines[1]);
+const map=["type","title","message","name","address","phone","permit","start","end","animals","purpose","place","extra"];
+map.forEach((id,i)=>{if(row[i]!==undefined)document.getElementById(id).value=row[i]});
+update();
+alert("CSVの1行目のデータを読み込みました");
+};
+reader.readAsText(file,"UTF-8");
+e.target.value="";
+}
+function parseCSV(line){
+const out=[];let s="",q=false;
+for(let i=0;i<line.length;i++){
+const c=line[i];
+if(c==='"'&&q&&line[i+1]==='"'){s+='"';i++}
+else if(c==='"')q=!q;
+else if(c===','&&!q){out.push(s);s=""}
+else s+=c;
+}
+out.push(s);
+return out;
+}
+update();
+</script>
+</body>
+</html>
